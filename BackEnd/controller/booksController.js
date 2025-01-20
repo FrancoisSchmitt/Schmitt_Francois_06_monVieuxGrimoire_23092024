@@ -6,14 +6,15 @@ const Book = require("../model/books");
 const User = require("../model/auth");
 
 
-exports.createBook = (req, res, next) => {
-	    let bookObject = JSON.parse(req.body.book);
+exports.createBook = async (req, res, next) => {
+    let bookObject = JSON.parse(req.body.book);
     delete bookObject._id;
     delete bookObject._userId;
+    const compressedImg = await compressImg(req.file.buffer);
     const book = new Book({
 			...bookObject,
 			userId: req.auth.userId,
-			imageUrl: req.file.path,
+			imageUrl: compressedImg,
 		});
     book.averageRating = book.calculateAverageRating();
     book.save()
@@ -48,33 +49,62 @@ exports.getAllBooks = (req, res) => {
 		});
 };
 
+// exports.modifyBook = async (req, res) => {
+//     delete req.body.ratings;
+//     if(req.file) {
+//         req.body.imageUrl = req.file.path
+//     }
+//     Book.findOne({ _id: req.params.id })
+//         .then((book) => {
+//             if(book.userId != req.auth.userId) {
+//                 res.status(401).json({ message: 'Non autorisé !' });
+//             } else {
+//                 if(req.file) {
+//                     const filename = book.imageUrl;
+//                     fs.unlink(`images/${filename}`, () => {                 
+//                         Book.updateOne({ _id: req.params.id }, { ...req.body })
+//                             .then(() => res.status(200).json({ message: 'Livre modifié !'}))
+//                             .catch(error => res.status(400).json({ error }));
+//                     })
+//                 } else {
+//                     Book.updateOne({ _id: req.params.id }, { ...req.body })
+//                             .then(() => res.status(200).json({ message: 'Livre modifié !'}))
+//                             .catch(error => res.status(400).json({ error }));
+//                 }
+//             }
+//         })
+//         .catch((error) => {
+//             res.status(500).json({ error });
+//         });
+// };
+
 exports.modifyBook = async (req, res) => {
-    delete req.body.ratings;
-    if(req.file) {
-        req.body.imageUrl = req.file.path
-    }
-    Book.findOne({ _id: req.params.id })
-        .then((book) => {
-            if(book.userId != req.auth.userId) {
-                res.status(401).json({ message: 'Non autorisé !' });
-            } else {
-                if(req.file) {
-                    const filename = book.imageUrl;
-                    fs.unlink(`images/${filename}`, () => {                 
-                        Book.updateOne({ _id: req.params.id }, { ...req.body })
-                            .then(() => res.status(200).json({ message: 'Livre modifié !'}))
-                            .catch(error => res.status(400).json({ error }));
-                    })
-                } else {
-                    Book.updateOne({ _id: req.params.id }, { ...req.body })
-                            .then(() => res.status(200).json({ message: 'Livre modifié !'}))
-                            .catch(error => res.status(400).json({ error }));
-                }
-            }
-        })
-        .catch((error) => {
-            res.status(500).json({ error });
-        });
+	delete req.body.ratings;
+	if (req.file) {
+		req.body.imageUrl = await compressImg(req.file.buffer);
+	}
+	Book.findOne({ _id: req.params.id })
+		.then((book) => {
+			if (book.userId != req.auth.userId) {
+				res.status(401).json({ message: "Non autorisé !" });
+			} else {
+				if (req.file) {
+					const filename = book.imageUrl;
+					fs.unlink(`images/${filename}`, () => {
+						Book.updateOne({ _id: req.params.id }, { ...req.body })
+							.then(() => res.status(200).json({ message: "Livre modifié !" }))
+							.catch((error) => res.status(400).json({ error }));
+					});
+				} else {
+					Book.updateOne({ _id: req.params.id }, { ...req.body })
+						.then(() => res.status(200).json({ message: "Livre modifié !" }))
+						.catch((error) => res.status(400).json({ error }));
+				}
+			}
+		})
+		.catch((error) => {
+			res.status(500).json({ error });
+		});
 };
 
 
