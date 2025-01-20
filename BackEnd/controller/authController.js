@@ -8,24 +8,27 @@ const jwt = require("jsonwebtoken");
  */
 
 exports.userCreate = async (req, res) => {
-	try {
-		const data = req.body;
-		res.send("Record saved successfuly");
-
-		console.log(req.body);
-		bcrypt
-			.hash(req.body.password, 10)
-			.then((hash) => {
-				const user = new Userdb({
-					email: req.body.email,
-					password: hash,
-				});
-				user.save();
+	 Userdb.findOne({ email: req.body.email })
+			.then((user) => {
+				if (user) {
+					return res.status(401).json({ message: "Utilisateur déjà créé !" });
+				} else {
+					bcrypt
+						.hash(req.body.password, 10)
+						.then((hash) => {
+							const user = new User({
+								email: req.body.email,
+								password: hash,
+							});
+							user
+								.save()
+								.then(res.status(201).json({ message: "Utilisateur créé !" }))
+								.catch((error) => res.status(400).json({ error }));
+						})
+						.catch((error) => res.status(500).json({ error }));
+				}
 			})
 			.catch((error) => res.status(500).json({ error }));
-	} catch (error) {
-		res.status(400).send(error.message);
-	}
 };
 
 exports.userLogin = (req, res, next) => {
