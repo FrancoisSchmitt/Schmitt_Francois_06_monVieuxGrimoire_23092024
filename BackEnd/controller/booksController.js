@@ -143,6 +143,9 @@ exports.addRating = (req, res) => {
 				book.averageRating = book.calculateAverageRating();
 				return book
 					.save()
+					.then((book) => {
+						return rewriteImageUrl(req, book);
+					})
 					.then((updatedBook) => {
 						res.status(200).json(updatedBook);
 					})

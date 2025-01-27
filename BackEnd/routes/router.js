@@ -26,11 +26,12 @@ route.get("/books/bestrating", booksController.bestRating);
 
 route.put("/books/:id", auth, multer, booksController.modifyBook);
 
-route.get("/books", booksController.getAllBooks);
-route.get("/books/:id", booksController.getOneBook);
+route.post("/books/:id/rating", auth, booksController.addRating);
 
+route.get("/books/:id", booksController.getOneBook);
 route.delete("/books/:id", auth, booksController.deleteBookId);
 
-route.post("/books/:id/rating", auth, booksController.addRating);
+route.get("/books", booksController.getAllBooks);
+
 
 module.exports = route;
